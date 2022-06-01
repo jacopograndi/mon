@@ -37,36 +37,35 @@ impl GameState {
         gst
     }
 
-    fn draw (gst: &mut GameState, own: i32) {
+    fn draw (&mut self, own: i32) {
         let own_index : usize = own.try_into().unwrap(); 
-        let card = gst.deck.remove(0);
-        gst.hands[own_index].push(card);
+        let card = self.deck.remove(0);
+        self.hands[own_index].push(card);
     }
 
-    fn play (gst: &mut GameState, own: i32, num: i32) {
-        GameState::discard(gst, own, num);
+    fn play (&mut self, own: i32, num: i32) {
+        self.discard(own, num);
         let line_index : usize = (num/18).try_into().unwrap(); 
-        let (lo, hi) = GameState::lohi(gst, line_index);
-        for (_i, mut pc) in gst.board[line_index]
+        for (_i, mut pc) in self.board[line_index]
                 .iter_mut().rev().enumerate() {
             if pc.card.num > num {
                pc.own = own;
             }
             else { break; }
         }
-        gst.board[line_index].push(PlayedCard {
+        self.board[line_index].push(PlayedCard {
             card: Card { num },
             own: own
         });
     }
 
-    fn lohi (gst: &mut GameState, line: usize) -> (i32, i32) {
+    fn lohi (&mut self, line: usize) -> (i32, i32) {
         let mut lo : i32 = 0;
-        let hi : i32 = match gst.board[line].last() {
+        let hi : i32 = match self.board[line].last() {
             Some(pc) => pc.card.num,
             None => 0
         };
-        for (_i, pc) in gst.board[line].iter().rev().enumerate() {
+        for (_i, pc) in self.board[line].iter().rev().enumerate() {
             if pc.card.num < hi {
                lo = pc.card.num;
                break;
@@ -75,14 +74,14 @@ impl GameState {
         (lo, hi)
     }
 
-    fn discard (gst: &mut GameState, own: i32, num: i32) {
+    fn discard (&mut self, own: i32, num: i32) {
         let own_index : usize = own.try_into().unwrap(); 
-        gst.hands[own_index].retain(|card| card.num != num);
+        self.hands[own_index].retain(|card| card.num != num);
     }
 
-    fn value(gst: &GameState, own: i32) -> i32 {
+    fn value(&mut self, own: i32) -> i32 {
         let mut tot = 0;
-        for line in &gst.board {
+        for line in &self.board {
             for played in line {
                 if played.own == own {
                     tot += Card::value(&played.card);
@@ -92,16 +91,16 @@ impl GameState {
         tot
     }
 
-    fn show(gst: &GameState) {
+    fn show(&self) {
         print!("deck: [");
-        for (i, card) in gst.deck.iter().enumerate() {
+        for (i, card) in self.deck.iter().enumerate() {
             print!("{}", card.num);
-            if i < gst.deck.len()-1 { print!(", "); }
+            if i < self.deck.len()-1 { print!(", "); }
         }
         println!("]");
 
         println!("board: ");
-        for (_i, line) in gst.board.iter().enumerate() {
+        for (_i, line) in self.board.iter().enumerate() {
             print!("  line: [");
             for (j, playedcard) in line.iter().enumerate() {
                 print!("({}:{})", playedcard.card.num, playedcard.own);
@@ -111,7 +110,7 @@ impl GameState {
         }
 
         println!("hands: ");
-        for (i, hand) in gst.hands.iter().enumerate() {
+        for (i, hand) in self.hands.iter().enumerate() {
             print!("  hand player {}: [", i);
             for (j, card) in hand.iter().enumerate() {
                 print!("{}", card.num);
@@ -125,13 +124,13 @@ impl GameState {
 
 fn main() {
     let mut gst = GameState::new(2);
-    println!("board value: {}", GameState::value(&gst, 0));
-    GameState::show(&gst);
+    println!("board value: {}", gst.value( 0));
+    gst.show();
     let num = gst.hands[0][0].num;
-    GameState::play(&mut gst, 0, num);
+    gst.play(0, num);
     let num = gst.hands[0][0].num;
-    GameState::play(&mut gst, 0, num);
+    gst.play(0, num);
     let num = gst.hands[1][0].num;
-    GameState::play(&mut gst, 1, num);
-    GameState::show(&gst);
+    gst.play(1, num);
+    gst.show();
 }
