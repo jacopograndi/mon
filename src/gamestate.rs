@@ -93,7 +93,7 @@ impl GameState {
     }
 
     pub fn lohi (&self, line: usize) -> (i32, i32) {
-        let mut lo : i32 = 0;
+        let mut lo : i32 = -1;
         let hi : i32 = match self.board[line].last() {
             Some(pc) => pc.card.num,
             None => 0
@@ -148,3 +148,45 @@ impl GameState {
         }
     }
 } 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_play_forward() {
+        let mut gst = GameState {
+            board: vec![vec![], vec![], vec![]],
+            hands: vec![vec![Card { num: 0 }]],
+            deck: vec![],
+            turn: 0
+        };
+        assert![gst.can_play(0, 0)];
+    }
+
+    #[test]
+    fn can_play_backward() {
+        let mut gst = GameState {
+            board: vec![vec![
+                PlayedCard { card: Card { num: 1 }, own: 1 }], 
+                vec![], vec![]],
+            hands: vec![vec![Card { num: 0 }]],
+            deck: vec![],
+            turn: 0
+        };
+        assert![gst.can_play(0, 0)];
+    }
+
+    #[test]
+    fn cannot_play_backward() {
+        let mut gst = GameState {
+            board: vec![vec![
+                PlayedCard { card: Card { num: 1 }, own: 0 }], 
+                vec![], vec![]],
+            hands: vec![vec![Card { num: 0 }]],
+            deck: vec![],
+            turn: 0
+        };
+        assert![!gst.can_play(0, 0)];
+    }
+}
