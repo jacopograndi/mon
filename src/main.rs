@@ -10,8 +10,7 @@ use crate::{
 fn main() {
     let gst = GameState::new(2);
     gst.show();
-    println!("board value: {}\n", gst.value( 0));
-    let nexts = gst.next();
-    println!("nexts len: {}", nexts.len());
-    search(&gst);
+    println!("board value: {}", gst.eval());
+    let value = minimax(&gst, 3, true);
+    println!("best move value: {}", value);
 }

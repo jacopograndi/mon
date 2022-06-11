@@ -1,5 +1,5 @@
 use rand::{ thread_rng, seq::SliceRandom };
-use crate::search::Next;
+use crate::search::State;
 
 
 #[derive(Clone)]
@@ -8,7 +8,7 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn value(card: &Card) -> i32 { (card.num+6-1) / 6 }
+    pub fn value(&self) -> i32 { (self.num+6-1) / 6 }
 }
 
 
@@ -108,18 +108,6 @@ impl GameState {
         (lo, hi)
     }
 
-    pub fn value(&self, own: i32) -> i32 {
-        let mut tot = 0;
-        for line in &self.board {
-            for played in line {
-                if played.own == own {
-                    tot += Card::value(&played.card);
-                }
-            }
-        }
-        tot
-    }
-
     pub fn show(&self) {
         print!("deck: [");
         for (i, card) in self.deck.iter().enumerate() {
@@ -150,7 +138,7 @@ impl GameState {
     }
 }
 
-impl Next for GameState {
+impl State for GameState {
     fn next (&self) -> Vec<GameState> {
         let mut nexts = Vec::<GameState>::new();
         let own_index = self.get_current_player();
@@ -178,5 +166,20 @@ impl Next for GameState {
             }
         }
         nexts
+    }
+
+    fn eval(&self) -> i32 {
+        let mut others : Vec<i32> = vec![0; self.hands.len()];
+        for line in &self.board {
+            for played in line {
+                let index_from_own : usize = played.own.try_into().unwrap();
+                others[index_from_own] += played.card.value();
+            }
+        }
+        let cur_player = (self.turn%self.hands.len()).try_into().unwrap();
+        let cur_points = others[cur_player];
+        others.remove(cur_player);
+        let max = *others.iter().max().unwrap();
+        cur_points - max
     }
 } 
