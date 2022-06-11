@@ -1,4 +1,5 @@
 use rand::{ thread_rng, seq::SliceRandom };
+use crate::search::Next;
 
 
 #[derive(Clone)]
@@ -88,7 +89,7 @@ impl GameState {
         else { true }
     }
 
-    pub fn can_draw (&self, own: i32) -> bool {
+    pub fn can_draw (&self) -> bool {
         self.deck.len() > 0
     }
 
@@ -147,46 +148,35 @@ impl GameState {
             println!("]");
         }
     }
-} 
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn can_play_forward() {
-        let mut gst = GameState {
-            board: vec![vec![], vec![], vec![]],
-            hands: vec![vec![Card { num: 0 }]],
-            deck: vec![],
-            turn: 0
-        };
-        assert![gst.can_play(0, 0)];
-    }
-
-    #[test]
-    fn can_play_backward() {
-        let mut gst = GameState {
-            board: vec![vec![
-                PlayedCard { card: Card { num: 1 }, own: 1 }], 
-                vec![], vec![]],
-            hands: vec![vec![Card { num: 0 }]],
-            deck: vec![],
-            turn: 0
-        };
-        assert![gst.can_play(0, 0)];
-    }
-
-    #[test]
-    fn cannot_play_backward() {
-        let mut gst = GameState {
-            board: vec![vec![
-                PlayedCard { card: Card { num: 1 }, own: 0 }], 
-                vec![], vec![]],
-            hands: vec![vec![Card { num: 0 }]],
-            deck: vec![],
-            turn: 0
-        };
-        assert![!gst.can_play(0, 0)];
-    }
 }
+
+impl Next for GameState {
+    fn next (&self) -> Vec<GameState> {
+        let mut nexts = Vec::<GameState>::new();
+        let own_index = self.get_current_player();
+        let own : i32 = self.get_current_player().try_into().unwrap();
+
+        for card in self.hands[own_index].iter() {
+            if self.can_play(own, card.num) {
+                let mut next = self.clone();
+                next.play(own, card.num);
+                next.turn += 1;
+                nexts.push(next);
+            }
+
+            let mut next = self.clone();
+            next.discard(own, card.num);
+            next.turn += 1;
+            nexts.push(next);
+            
+            if self.can_draw() {
+                let mut next = self.clone();
+                next.discard(own, card.num);
+                next.draw(own);
+                next.turn += 1;
+                nexts.push(next);
+            }
+        }
+        nexts
+    }
+} 
